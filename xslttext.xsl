@@ -97,13 +97,6 @@
             </xsl:choose>
         </xsl:variable>
 
-        <!-- Indicate if record is suppressed in OPAC -->
-        <xsl:if test="$OpacSuppression = 1">
-            <xsl:if test="marc:datafield[@tag=942][marc:subfield[@code='n'] = '1']">
-                <span class="results_summary suppressed_opac">Suppressed in OPAC</span>
-            </xsl:if>
-        </xsl:if>
-
         <!-- Title Statement -->
         <!-- Alternate Graphic Representation (MARC 880) -->
         <xsl:if test="$display880">
@@ -290,29 +283,37 @@
             <xsl:when test="marc:datafield[@tag=260]">
                 <span class="results_summary publisher"><span class="label">Publication details: </span>
                     <xsl:for-each select="marc:datafield[@tag=260]">
-                        <xsl:if test="marc:subfield[@code='a']">
-                            <xsl:call-template name="subfieldSelect">
-                                <xsl:with-param name="codes">a</xsl:with-param>
-                            </xsl:call-template>
-                        </xsl:if>
-                        <xsl:text> </xsl:text>
-                        <xsl:if test="marc:subfield[@code='b']">
-                        <a>
-                            <xsl:attribute name="href">/cgi-bin/koha/catalogue/search.pl?q=Provider:"<xsl:value-of select="str:encode-uri(marc:subfield[@code='b'], true())"/>"</xsl:attribute>
-                            <xsl:call-template name="subfieldSelect">
-                                <xsl:with-param name="codes">b</xsl:with-param>
-                            </xsl:call-template>
-                       </a>
-                       </xsl:if>
-                       <xsl:text> </xsl:text>
-                        <xsl:call-template name="chopPunctuation">
-                          <xsl:with-param name="chopString">
-                            <xsl:call-template name="subfieldSelect">
-                                <xsl:with-param name="codes">cg</xsl:with-param>
-                            </xsl:call-template>
-                           </xsl:with-param>
-                       </xsl:call-template>
-                            <xsl:choose><xsl:when test="position()=last()"><xsl:text></xsl:text></xsl:when><xsl:otherwise><xsl:text>; </xsl:text></xsl:otherwise></xsl:choose>
+                        <xsl:for-each select="marc:subfield">
+                            <xsl:if test="@code='a'">
+                                <a>
+                                    <xsl:attribute name="href">/cgi-bin/koha/catalogue/search.pl?q=pl:"<xsl:value-of select="str:encode-uri(current(), true())"/>"</xsl:attribute>
+                                    <xsl:value-of select="current()"/>
+                                </a>
+                            </xsl:if>
+                            <xsl:if test="@code='b'">
+                                <a>
+                                    <xsl:attribute name="href">/cgi-bin/koha/catalogue/search.pl?q=Provider:"<xsl:value-of select="str:encode-uri(current(), true())"/>"</xsl:attribute>
+                                    <xsl:value-of select="current()"/>
+                                </a>
+                            </xsl:if>
+                            <xsl:if test="@code='c'">
+                                <a>
+                                    <xsl:attribute name="href">/cgi-bin/koha/catalogue/search.pl?q=copydate:"<xsl:value-of select="str:encode-uri(current(), true())"/>"</xsl:attribute>
+                                    <xsl:value-of select="current()"/>
+                                </a>
+                            </xsl:if>
+                            <xsl:if test="@code='g'">
+                                <xsl:call-template name="chopPunctuation">
+                                   <xsl:with-param name="chopString">
+                                      <xsl:value-of select="current()"/>
+                                   </xsl:with-param>
+                                </xsl:call-template>
+                            </xsl:if>
+                            <xsl:if test="position() != last()">
+                                <xsl:text> </xsl:text>
+                            </xsl:if>
+                        </xsl:for-each>
+                        <xsl:choose><xsl:when test="position()=last()"><xsl:text></xsl:text></xsl:when><xsl:otherwise><xsl:text>; </xsl:text></xsl:otherwise></xsl:choose>
                     </xsl:for-each>
                 </span>
             </xsl:when>
@@ -681,11 +682,9 @@
                 <xsl:text> </xsl:text>
                 <a class='authlink'>
                     <xsl:attribute name="href">/cgi-bin/koha/authorities/detail.pl?authid=<xsl:value-of select="str:encode-uri(marc:subfield[@code=9], true())"/></xsl:attribute>
-                    <xsl:element name="img">
-                        <xsl:attribute name="src">/intranet-tmpl/prog/img/filefind.png</xsl:attribute>
-                        <xsl:attribute name="alt"></xsl:attribute>
-                        <xsl:attribute name="height">15</xsl:attribute>
-                        <xsl:attribute name="width">15</xsl:attribute>
+                    <xsl:element name="i">
+                        <xsl:attribute name="class">fa fa-search</xsl:attribute>
+                        <xsl:attribute name="aria-label">View authority record</xsl:attribute>
                     </xsl:element>
                 </a>
             </xsl:if>
@@ -733,11 +732,9 @@
                         <xsl:text> </xsl:text>
                         <a class='authlink'>
                             <xsl:attribute name="href">/cgi-bin/koha/authorities/detail.pl?authid=<xsl:value-of select="str:encode-uri(marc:subfield[@code=9], true())"/></xsl:attribute>
-                            <xsl:element name="img">
-                                <xsl:attribute name="src">/intranet-tmpl/prog/img/filefind.png</xsl:attribute>
-                                <xsl:attribute name="alt"></xsl:attribute>
-                                <xsl:attribute name="height">15</xsl:attribute>
-                                <xsl:attribute name="width">15</xsl:attribute>
+                            <xsl:element name="i">
+                                <xsl:attribute name="class">fa fa-search</xsl:attribute>
+                                <xsl:attribute name="aria-label">View authority record</xsl:attribute>
                             </xsl:element>
                         </a>
                     </xsl:if>
@@ -1414,11 +1411,24 @@
             </xsl:for-each>
         </xsl:if>
 
-        <xsl:if test="$OPACBaseURL!=''">
-        <span class="results_summary opac_view"><span class="label">OPAC view: </span>
-            <a><xsl:attribute name="href"><xsl:value-of select="$OPACBaseURL"/>/cgi-bin/koha/opac-detail.pl?biblionumber=<xsl:value-of select="str:encode-uri(marc:datafield[@tag=999]/marc:subfield[@code='c'], true())"/></xsl:attribute><xsl:attribute name="target">_blank</xsl:attribute>Open in new window</a>.
-        </span>
-        </xsl:if>
+        <!-- Indicate if record is suppressed in OPAC -->
+        <xsl:choose>
+            <xsl:when test="$OpacSuppression = 1 and marc:datafield[@tag=942][marc:subfield[@code='n'] = '1']">
+                <span class="results_summary suppressed_opac">
+                    <span class="label">OPAC view: </span>
+                    Suppressed in OPAC
+                </span>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:if test="$OPACBaseURL!=''">
+                    <span class="results_summary opac_view"><span class="label">OPAC view: </span>
+                        <a><xsl:attribute name="href"><xsl:value-of select="$OPACBaseURL"/>/cgi-bin/koha/opac-detail.pl?biblionumber=<xsl:value-of select="str:encode-uri(marc:datafield[@tag=999]/marc:subfield[@code='c'], true())"/></xsl:attribute><xsl:attribute name="target">_blank</xsl:attribute>Open in new window</a>.
+                    </span>
+                </xsl:if>
+            </xsl:otherwise>
+        </xsl:choose>
+
+
 
     </xsl:template>
 
@@ -1697,12 +1707,21 @@
                 </span>
             </xsl:if>
         </a>
+        <xsl:if test="marc:subfield[@code=9]">
+                <xsl:text> </xsl:text>
+                <a class='authlink'>
+                    <xsl:attribute name="href">/cgi-bin/koha/authorities/detail.pl?authid=<xsl:value-of select="str:encode-uri(marc:subfield[@code=9], true())"/></xsl:attribute>
+                    <xsl:element name="i">
+                        <xsl:attribute name="class">fa fa-search</xsl:attribute>
+                        <xsl:attribute name="aria-label">View authority record</xsl:attribute>
+                    </xsl:element>
+                </a>
+        </xsl:if>
         <xsl:choose>
-            <xsl:when test="position()=last()"><xsl:text></xsl:text></xsl:when><xsl:otherwise><span class="separator"><xsl:text> | </xsl:text></span></xsl:otherwise>
+          <xsl:when test="position()=last()"><xsl:text></xsl:text></xsl:when><xsl:otherwise><span class="separator"><xsl:text> | </xsl:text></span></xsl:otherwise>
         </xsl:choose>
         </xsl:for-each>
         </h5>
-
 	</xsl:if>
     </xsl:template>
 
@@ -1736,4 +1755,3 @@
     </xsl:template>
 
 </xsl:stylesheet>
-
